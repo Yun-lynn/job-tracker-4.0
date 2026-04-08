@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>求职追踪表 ✦</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f5ff; --surface: #ffffff; --border: #e8e4f3;
+    --text: #1a1535; --muted: #7c6fa0; --radius: 14px;
+    --shadow: 0 2px 12px rgba(120,80,200,0.08);
+  }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #0ea5e9 100%); padding: 2rem 2rem 3.5rem; position: relative; overflow: hidden; }
+  .header::before { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.08); }
+  .header::after { content:''; position:absolute; bottom:-60px; left:30%; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,0.05); }
+  .header-inner { position:relative; z-index:1; max-width:1300px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
+  .header h1 { font-size:2rem; font-weight:800; color:#fff; letter-spacing:-0.02em; }
+  .header p { color:rgba(255,255,255,0.8); font-size:0.9rem; margin-top:4px; }
+  .sync-status { font-size:12px; color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.15); padding:6px 14px; border-radius:20px; }
+  .sync-status.saving { color:#fef3c7; }
+  .sync-status.error { color:#fecaca; }
+
+  .stats-wrap { max-width:1300px; margin:-1.5rem auto 0; padding:0 2rem; display:grid; grid-template-columns:repeat(5,1fr); gap:12px; position:relative; z-index:2; }
+  .stat { background:var(--surface); border-radius:var(--radius); padding:1rem 1.2rem; box-shadow:var(--shadow); border-top:4px solid transparent; transition:transform 0.15s; }
+  .stat:hover { transform:translateY(-2px); }
+  .stat:nth-child(1){border-color:#7c3aed;} .stat:nth-child(2){border-color:#0ea5e9;} .stat:nth-child(3){border-color:#10b981;} .stat:nth-child(4){border-color:#ef4444;} .stat:nth-child(5){border-color:#ec4899;}
+  .stat-num { font-size:1.8rem; font-weight:800; line-height:1; }
+  .stat:nth-child(1) .stat-num{color:#7c3aed;} .stat:nth-child(2) .stat-num{color:#0ea5e9;} .stat:nth-child(3) .stat-num{color:#10b981;} .stat:nth-child(4) .stat-num{color:#ef4444;} .stat:nth-child(5) .stat-num{color:#ec4899;}
+  .stat-label { font-size:0.72rem; color:var(--muted); margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+
+  .main { max-width:1300px; margin:1.5rem auto; padding:0 2rem 3rem; }
+
+  .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; background:var(--surface); border-radius:var(--radius); padding:1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .toolbar input[type="text"] { flex:1; min-width:180px; padding:8px 14px; border-radius:30px; border:2px solid var(--border); font-family:'Nunito',sans-serif; font-size:13px; background:var(--bg); color:var(--text); outline:none; transition:border 0.2s; }
+  .toolbar input[type="text"]:focus { border-color:#7c3aed; }
+  .toolbar select { padding:8px 14px; border-radius:30px; border:2px solid var(--border); font-family:'Nunito',sans-serif; font-size:13px; background:var(--bg); color:var(--text); outline:none; cursor:pointer; }
+  .btn { padding:8px 18px; border-radius:30px; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; cursor:pointer; border:none; transition:all 0.15s; }
+  .btn-add { background:linear-gradient(135deg,#7c3aed,#ec4899); color:#fff; }
+  .btn-add:hover { opacity:0.88; transform:scale(1.02); }
+  .btn-export { background:var(--bg); color:var(--muted); border:2px solid var(--border); }
+  .btn-export:hover { border-color:#7c3aed; color:#7c3aed; }
+
+  .table-card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; min-width:1100px; }
+  thead th { background:#faf8ff; color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:12px 10px; text-align:left; border-bottom:2px solid var(--border); cursor:pointer; white-space:nowrap; user-select:none; }
+  thead th:hover { color:#7c3aed; }
+  tbody tr { border-bottom:1px solid #f3f0fb; transition:background 0.1s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:#faf8ff; }
+  td { padding:9px 10px; vertical-align:middle; }
+
+  .cell-view { display:flex; align-items:center; gap:5px; cursor:pointer; }
+  .cell-view:hover .edit-hint { opacity:1; }
+  .edit-hint { opacity:0; font-size:10px; color:#c4b5fd; transition:opacity 0.15s; flex-shrink:0; }
+  td select.inline-select, td input.inline-input { width:100%; padding:4px 7px; border-radius:8px; border:2px solid #c4b5fd; font-family:'Nunito',sans-serif; font-size:12px; background:#fff; color:var(--text); outline:none; }
+
+  .badge { display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:30px; white-space:nowrap; }
+  .s-投递中{background:#e0f2fe;color:#0369a1;} .s-待回复{background:#f3f0fb;color:#6d28d9;} .s-已笔试{background:#fef3c7;color:#92400e;} .s-已面试{background:#d1fae5;color:#065f46;} .s-已offer{background:#d1fae5;color:#065f46;border:2px solid #10b981;} .s-已拒{background:#fee2e2;color:#991b1b;}
+  .p1{background:#ede9fe;color:#5b21b6;} .p2{background:#fce7f3;color:#9d174d;} .p3{background:#d1fae5;color:#065f46;} .p4{background:#fef3c7;color:#92400e;} .p5{background:#fee2e2;color:#991b1b;} .p6{background:#e0f2fe;color:#0369a1;} .p7{background:#f3f4f6;color:#374151;}
+  .ch{background:#f3f0fb;color:#5b21b6;}
+  .net-yes{color:#10b981;font-size:15px;font-weight:800;cursor:pointer;} .net-no{color:#d1d5db;font-size:13px;cursor:pointer;}
+  .url-link { color:#7c3aed; font-size:12px; text-decoration:none; font-weight:700; }
+  .url-link:hover { text-decoration:underline; }
+  .jd-btn { background:none; border:2px solid #e8e4f3; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; color:var(--muted); cursor:pointer; transition:all 0.15s; font-family:'Nunito',sans-serif; }
+  .jd-btn:hover { border-color:#7c3aed; color:#7c3aed; background:#faf8ff; }
+  .jd-btn.has-content { border-color:#c4b5fd; color:#7c3aed; background:#faf8ff; }
+  .del-btn { background:none; border:none; cursor:pointer; color:#d1d5db; font-size:15px; padding:2px 6px; border-radius:6px; transition:all 0.15s; }
+  .del-btn:hover { color:#ef4444; background:#fee2e2; }
+
+  .add-row { background:#faf8ff !important; }
+  .add-row td { padding:6px 8px; }
+  .add-row input, .add-row select { width:100%; padding:5px 8px; border-radius:8px; border:2px solid #e8e4f3; font-family:'Nunito',sans-serif; font-size:12px; background:#fff; color:var(--text); outline:none; }
+  .add-row input:focus, .add-row select:focus { border-color:#7c3aed; }
+  .save-btn { background:linear-gradient(135deg,#7c3aed,#ec4899); border:none; border-radius:8px; padding:5px 12px; font-family:'Nunito',sans-serif; font-size:12px; font-weight:700; color:#fff; cursor:pointer; white-space:nowrap; }
+  .empty-row td { text-align:center; color:var(--muted); padding:3rem; font-size:14px; }
+  .loading-row td { text-align:center; color:var(--muted); padding:3rem; font-size:14px; }
+
+  .drawer-overlay { display:none; position:fixed; inset:0; background:rgba(26,21,53,0.35); z-index:100; }
+  .drawer-overlay.open { display:block; }
+  .drawer { position:fixed; top:0; right:-520px; width:500px; max-width:95vw; height:100vh; background:#fff; z-index:101; box-shadow:-4px 0 32px rgba(120,80,200,0.15); transition:right 0.3s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; }
+  .drawer.open { right:0; }
+  .drawer-header { padding:1.5rem 1.5rem 1rem; border-bottom:2px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:12px; background:linear-gradient(135deg,#faf8ff,#fce7f3); }
+  .drawer-title { font-size:1.05rem; font-weight:800; color:var(--text); }
+  .drawer-subtitle { font-size:12px; color:var(--muted); margin-top:3px; }
+  .drawer-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); padding:2px 6px; border-radius:8px; line-height:1; }
+  .drawer-close:hover { background:#fee2e2; color:#ef4444; }
+  .drawer-body { flex:1; overflow-y:auto; padding:1.5rem; display:flex; flex-direction:column; gap:1.25rem; }
+  .drawer-label { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:6px; }
+  .drawer-textarea { width:100%; min-height:150px; padding:12px 14px; border-radius:12px; border:2px solid var(--border); font-family:'Nunito',sans-serif; font-size:13px; color:var(--text); background:var(--bg); outline:none; resize:vertical; line-height:1.6; transition:border 0.2s; }
+  .drawer-textarea:focus { border-color:#7c3aed; background:#fff; }
+  .drawer-footer { padding:1rem 1.5rem; border-top:2px solid var(--border); display:flex; gap:10px; }
+  .drawer-save { background:linear-gradient(135deg,#7c3aed,#ec4899); border:none; border-radius:30px; padding:10px 24px; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; color:#fff; cursor:pointer; }
+  .drawer-save:hover { opacity:0.88; }
+  .drawer-cancel { background:none; border:2px solid var(--border); border-radius:30px; padding:10px 20px; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; }
+  .drawer-cancel:hover { border-color:#7c3aed; color:#7c3aed; }
+
+  @media(max-width:700px){
+    .stats-wrap{grid-template-columns:repeat(3,1fr);}
+    .header{padding:1.5rem 1rem 3rem;}
+    .main{padding:0 1rem 2rem;}
+    .stats-wrap{padding:0 1rem;}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <h1>✦ 求职追踪表</h1>
+      <p>Job Application Tracker · LA → 全美</p>
+    </div>
+    <div class="sync-status" id="sync-status">☁️ 已连接 Google Sheets</div>
+  </div>
+</div>
+
+<div class="stats-wrap" id="stats-row"></div>
+
+<div class="main">
+  <div class="toolbar">
+    <input type="text" id="search-input" placeholder="🔍  搜索公司 / 职位..." />
+    <select id="filter-priority">
+      <option value="">全部优先级</option>
+      <option>Priority 1 中企在美分公司</option>
+      <option>Priority 2 中企在美创业部</option>
+      <option>Priority 3 美本土/华人startup</option>
+      <option>Secondary 美本土/Latino startup</option>
+      <option>Third 纯美startup</option>
+      <option>Have a try LA大雇主</option>
+      <option>Remote 全美远程</option>
+    </select>
+    <select id="filter-status">
+      <option value="">全部状态</option>
+      <option>投递中</option><option>待回复</option><option>已笔试</option>
+      <option>已面试</option><option>已offer</option><option>已拒</option>
+    </select>
+    <button class="btn btn-add" onclick="toggleAddRow()">＋ 新增</button>
+    <button class="btn btn-export" onclick="exportCSV()">导出 CSV ↓</button>
+  </div>
+
+  <div class="table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32px;">#</th>
+            <th style="width:110px;" onclick="sortBy('公司')">公司 ↕</th>
+            <th style="width:130px;" onclick="sortBy('JD职位')">JD 职位 ↕</th>
+            <th style="width:95px;" onclick="sortBy('投递日期')">投递日期 ↕</th>
+            <th style="width:90px;" onclick="sortBy('状态')">状态 ↕</th>
+            <th style="width:88px;">投递渠道</th>
+            <th style="width:82px;">渠道类型</th>
+            <th style="width:150px;" onclick="sortBy('优先级分类')">优先级 ↕</th>
+            <th style="width:70px;">Network</th>
+            <th style="width:80px;">投递网址</th>
+            <th style="width:80px;">JD详情</th>
+            <th style="width:100px;">备注</th>
+            <th style="width:32px;"></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="jd-drawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawer-title">JD 详情</div>
+      <div class="drawer-subtitle" id="drawer-subtitle"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div>
+      <div class="drawer-label">📋 职位描述 / Job Description</div>
+      <textarea class="drawer-textarea" id="jd-content" placeholder="粘贴完整 JD 内容，或记录关键要求、薪资范围、技能要求..."></textarea>
+    </div>
+    <div>
+      <div class="drawer-label">🗣 面试记录 / Interview Notes</div>
+      <textarea class="drawer-textarea" id="jd-notes" placeholder="面试问题、回答思路、面试官姓名、面试官反馈..."></textarea>
+    </div>
+    <div>
+      <div class="drawer-label">📌 跟进提醒 / Follow-up</div>
+      <textarea class="drawer-textarea" id="jd-followup" style="min-height:90px;" placeholder="下一步行动、截止日期、联系人信息、感谢信..."></textarea>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="drawer-save" onclick="saveDrawer()">💾 保存</button>
+    <button class="drawer-cancel" onclick="closeDrawer()">取消</button>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwPnSJRiH7Be7hCjBHsCGSdb-zRVVpzBYIZ4xs-JtiSQGlqjAOSIHTwBZInvWPmhdae/exec';
+
+const PRIORITIES=['Priority 1 中企在美分公司','Priority 2 中企在美创业部','Priority 3 美本土/华人startup','Secondary 美本土/Latino startup','Third 纯美startup','Have a try LA大雇主','Remote 全美远程'];
+const STATUSES=['投递中','待回复','已笔试','已面试','已offer','已拒'];
+const CHANNELS=['LinkedIn','Handshake','直接官网','Networking','猎聘','Indeed','Internal','其他'];
+const CHANNEL_TYPES=['职场平台','官方渠道','人脉推荐','猎头','其他'];
+const P_CLASS={'Priority 1 中企在美分公司':'p1','Priority 2 中企在美创业部':'p2','Priority 3 美本土/华人startup':'p3','Secondary 美本土/Latino startup':'p4','Third 纯美startup':'p5','Have a try LA大雇主':'p6','Remote 全美远程':'p7'};
+
+let data=[];
+let nextId=1;
+let sortKey='投递日期', sortDir=-1, showAdd=false, drawerRowId=null;
+let saveTimer=null;
+
+function setStatus(msg, type=''){
+  const el=document.getElementById('sync-status');
+  el.textContent=msg; el.className='sync-status'+(type?' '+type:'');
+}
+
+async function loadData(){
+  setStatus('⏳ 加载中...');
+  document.getElementById('table-body').innerHTML='<tr class="loading-row"><td colspan="13">⏳ 正在从 Google Sheets 加载数据...</td></tr>';
+  try{
+    const res=await fetch(API_URL+'?action=getAll');
+    const json=await res.json();
+    data=(json.rows||[]).map((r,i)=>({...r, _id: r._id||String(i+1)}));
+    nextId=data.length+1;
+    setStatus('☁️ 已同步');
+    renderTable();
+  }catch(e){
+    setStatus('❌ 加载失败','error');
+    document.getElementById('table-body').innerHTML='<tr class="empty-row"><td colspan="13">❌ 无法连接 Google Sheets，请检查网络</td></tr>';
+  }
+}
+
+async function saveData(){
+  setStatus('💾 保存中...','saving');
+  try{
+    await fetch(API_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'save', rows: data}),
+    });
+    setStatus('☁️ 已保存到 Google Sheets');
+  }catch(e){
+    setStatus('❌ 保存失败，请重试','error');
+  }
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveData, 1000);
+}
+
+function getFiltered(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const fp=document.getElementById('filter-priority').value;
+  const fs=document.getElementById('filter-status').value;
+  return data.filter(r=>{
+    if(q&&!(r['公司']+r['JD职位']+(r['备注']||'')).toLowerCase().includes(q))return false;
+    if(fp&&r['优先级分类']!==fp)return false;
+    if(fs&&r['状态']!==fs)return false;
+    return true;
+  }).sort((a,b)=>{
+    let av=a[sortKey]||'',bv=b[sortKey]||'';
+    return av<bv?-sortDir:av>bv?sortDir:0;
+  });
+}
+
+function renderStats(){
+  const el=document.getElementById('stats-row');
+  const s=[
+    {num:data.length,label:'总投递数'},
+    {num:data.filter(r=>r['状态']==='已面试').length,label:'已面试'},
+    {num:data.filter(r=>r['状态']==='已offer').length,label:'已 Offer 🎉'},
+    {num:data.filter(r=>r['状态']==='已拒').length,label:'已拒信'},
+    {num:data.filter(r=>r['Networking']==='是').length,label:'Networking覆盖'},
+  ];
+  el.innerHTML=s.map(x=>`<div class="stat"><div class="stat-num">${x.num}</div><div class="stat-label">${x.label}</div></div>`).join('');
+}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function renderTable(){
+  renderStats();
+  const rows=getFiltered();
+  const tbody=document.getElementById('table-body');
+  let html='';
+  if(!rows.length){
+    html=`<tr class="empty-row"><td colspan="13">🔍 暂无匹配记录，点「＋ 新增」添加第一条</td></tr>`;
+  } else {
+    rows.forEach((r,i)=>{
+      const pc=P_CLASS[r['优先级分类']]||'p7';
+      const sc='s-'+(r['状态']||'投递中');
+      const hasJD=!!(r['JD详情']||r['面试记录']||r['跟进提醒']);
+      const rid=r._id;
+      html+=`<tr>
+        <td style="color:#7c6fa0;font-size:11px;font-weight:700;">${i+1}</td>
+        <td><div class="cell-view" onclick="startEdit('${rid}','公司',this)"><span style="font-weight:700;">${esc(r['公司'])}</span><span class="edit-hint">✏</span></div></td>
+        <td><div class="cell-view" onclick="startEdit('${rid}','JD职位',this)"><span>${esc(r['JD职位'])}</span><span class="edit-hint">✏</span></div></td>
+        <td><div class="cell-view" onclick="startEdit('${rid}','投递日期',this)"><span style="color:#7c6fa0;font-size:12px;">${r['投递日期']||''}</span><span class="edit-hint">✏</span></div></td>
+        <td onclick="startSelectEdit('${rid}','状态',this,${JSON.stringify(STATUSES)})"><div class="cell-view"><span class="badge ${sc}">${r['状态']||''}</span><span class="edit-hint">✏</span></div></td>
+        <td onclick="startSelectEdit('${rid}','投递渠道',this,${JSON.stringify(CHANNELS)})"><div class="cell-view"><span class="badge ch">${esc(r['投递渠道'])}</span><span class="edit-hint">✏</span></div></td>
+        <td onclick="startSelectEdit('${rid}','渠道类型',this,${JSON.stringify(CHANNEL_TYPES)})"><div class="cell-view"><span style="color:#7c6fa0;font-size:12px;">${esc(r['渠道类型'])}</span><span class="edit-hint">✏</span></div></td>
+        <td onclick="startSelectEdit('${rid}','优先级分类',this,${JSON.stringify(PRIORITIES)})"><div class="cell-view"><span class="badge ${pc}" style="font-size:10px;">${esc(r['优先级分类'])}</span><span class="edit-hint">✏</span></div></td>
+        <td style="text-align:center;" onclick="toggleNetworking('${rid}')">${r['Networking']==='是'?'<span class="net-yes">✓</span>':'<span class="net-no">—</span>'}</td>
+        <td><div class="cell-view" onclick="startEdit('${rid}','投递网址',this)">${r['投递网址']?`<a class="url-link" href="${esc(r['投递网址'])}" target="_blank" onclick="event.stopPropagation()">🔗 链接</a>`:'<span style="color:#c4b5fd;font-size:11px;">添加</span>'}<span class="edit-hint">✏</span></div></td>
+        <td><button class="jd-btn ${hasJD?'has-content':''}" onclick="openDrawer('${rid}')">${hasJD?'📝 查看':'＋ 记录'}</button></td>
+        <td><div class="cell-view" onclick="startEdit('${rid}','备注',this)"><span style="color:#7c6fa0;font-size:12px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${esc(r['备注']||'')}</span><span class="edit-hint">✏</span></div></td>
+        <td><button class="del-btn" onclick="deleteRow('${rid}')">✕</button></td>
+      </tr>`;
+    });
+  }
+  if(showAdd){
+    const today=new Date().toISOString().slice(0,10);
+    html+=`<tr class="add-row">
+      <td></td>
+      <td><input id="a-company" placeholder="公司名" /></td>
+      <td><input id="a-jd" placeholder="职位名称" /></td>
+      <td><input id="a-date" type="date" value="${today}" /></td>
+      <td><select id="a-status">${STATUSES.map(s=>`<option>${s}</option>`).join('')}</select></td>
+      <td><select id="a-channel">${CHANNELS.map(c=>`<option>${c}</option>`).join('')}</select></td>
+      <td><select id="a-chtype">${CHANNEL_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></td>
+      <td><select id="a-priority">${PRIORITIES.map(p=>`<option>${p}</option>`).join('')}</select></td>
+      <td><select id="a-net"><option>否</option><option>是</option></select></td>
+      <td><input id="a-url" placeholder="https://..." /></td>
+      <td></td>
+      <td><input id="a-note" placeholder="备注" /></td>
+      <td><button class="save-btn" onclick="addRow()">保存</button></td>
+    </tr>`;
+  }
+  tbody.innerHTML=html;
+  if(showAdd) document.getElementById('a-company').focus();
+}
+
+function startEdit(id,field,cellEl){
+  const r=data.find(x=>x._id===id);if(!r)return;
+  const td=cellEl.closest('td');
+  const val=r[field]||'';
+  const type=field==='投递日期'?'date':'text';
+  td.innerHTML=`<input class="inline-input" type="${type}" value="${esc(val)}" onblur="commitEdit('${id}','${field}',this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')renderTable();" />`;
+  td.querySelector('input').focus();
+}
+
+function startSelectEdit(id,field,cellEl,options){
+  const r=data.find(x=>x._id===id);if(!r)return;
+  const td=cellEl.closest('td');
+  const val=r[field]||'';
+  td.innerHTML=`<select class="inline-select" onchange="commitSelectEdit('${id}','${field}',this)" onblur="renderTable()">${options.map(o=>`<option${o===val?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  td.querySelector('select').focus();
+}
+
+function commitEdit(id,field,el){
+  const r=data.find(x=>x._id===id);if(!r)return;
+  r[field]=el.value.trim();scheduleSave();renderTable();
+}
+
+function commitSelectEdit(id,field,el){
+  const r=data.find(x=>x._id===id);if(!r)return;
+  r[field]=el.value;scheduleSave();renderTable();
+}
+
+function toggleNetworking(id){
+  const r=data.find(x=>x._id===id);if(!r)return;
+  r['Networking']=r['Networking']==='是'?'否':'是';scheduleSave();renderTable();
+}
+
+function toggleAddRow(){showAdd=!showAdd;renderTable();}
+
+function addRow(){
+  const company=document.getElementById('a-company').value.trim();
+  if(!company){document.getElementById('a-company').focus();return;}
+  const newRow={
+    _id: String(Date.now()),
+    '公司':company,
+    'JD职位':document.getElementById('a-jd').value.trim(),
+    '投递日期':document.getElementById('a-date').value,
+    '状态':document.getElementById('a-status').value,
+    '投递渠道':document.getElementById('a-channel').value,
+    '渠道类型':document.getElementById('a-chtype').value,
+    '优先级分类':document.getElementById('a-priority').value,
+    'Networking':document.getElementById('a-net').value,
+    '投递网址':document.getElementById('a-url').value.trim(),
+    '备注':document.getElementById('a-note').value.trim(),
+    'JD详情':'','面试记录':'','跟进提醒':'',
+  };
+  data.push(newRow);
+  showAdd=false;scheduleSave();renderTable();
+}
+
+function deleteRow(id){
+  if(!confirm('确认删除该条记录？'))return;
+  data=data.filter(r=>r._id!==id);scheduleSave();renderTable();
+}
+
+function sortBy(key){
+  if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=1;}renderTable();
+}
+
+function openDrawer(id){
+  const r=data.find(x=>x._id===id);if(!r)return;
+  drawerRowId=id;
+  document.getElementById('drawer-title').textContent=(r['公司']||'')+' · '+(r['JD职位']||'');
+  document.getElementById('drawer-subtitle').textContent=(r['投递日期']||'')+' · '+(r['状态']||'');
+  document.getElementById('jd-content').value=r['JD详情']||'';
+  document.getElementById('jd-notes').value=r['面试记录']||'';
+  document.getElementById('jd-followup').value=r['跟进提醒']||'';
+  document.getElementById('jd-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+
+function closeDrawer(){
+  document.getElementById('jd-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  drawerRowId=null;
+}
+
+function saveDrawer(){
+  if(drawerRowId===null)return;
+  const r=data.find(x=>x._id===drawerRowId);if(!r)return;
+  r['JD详情']=document.getElementById('jd-content').value;
+  r['面试记录']=document.getElementById('jd-notes').value;
+  r['跟进提醒']=document.getElementById('jd-followup').value;
+  scheduleSave();closeDrawer();renderTable();
+}
+
+function exportCSV(){
+  const cols=['公司','JD职位','投递日期','状态','投递渠道','渠道类型','优先级分类','Networking','投递网址','备注'];
+  const rows=[cols.join(',')].concat(data.map(r=>cols.map(k=>`"${(r[k]||'').replace(/"/g,'""')}"`).join(',')));
+  const blob=new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='求职追踪表.csv';a.click();
+}
+
+document.getElementById('search-input').addEventListener('input',renderTable);
+document.getElementById('filter-priority').addEventListener('change',renderTable);
+document.getElementById('filter-status').addEventListener('change',renderTable);
+
+loadData();
+</script>
+</body>
+</html>
